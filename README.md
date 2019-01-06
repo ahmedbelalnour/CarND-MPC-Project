@@ -1,6 +1,59 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+[//]: # (Image References)
+[image1]: ./examples/mpc-image.png "MPC controller example"
+[image2]: ./examples/MPC_model_setup_step.png "MPC Model setup step"
+[image3]: ./examples/MPC_model_repeate_step.png "MPC Model repeate step"
+
+![alt text][image1]
+Displaying the MPC trajectory path in green, and the polynomial fitted reference path in yellow.
+
+In this project I will implement Model Predictive Control (MPC) in C++ to maneuver the vehicle around the track!
+* The [simulator](https://github.com/udacity/self-driving-car-sim/releases)
+will provide the following data to the c++ application:
+ * ptsx (Array) - The global x positions of the waypoints.
+ * ptsy (Array) - The global y positions of the waypoints. This corresponds to the z coordinate in Unity since y is the up-down direction.
+ * psi (float) - The orientation of the vehicle in radians converted from the Unity format to the standard format expected in most mathemetical functions (more details below).
+ * psi_unity (float) - The orientation of the vehicle in radians. This is an orientation commonly used in navigation.
+ * x (float) - The global x position of the vehicle.
+ * y (float) - The global y position of the vehicle.
+ * steering_angle (float) - The current steering angle in radians.
+ * throttle (float) - The current throttle value [-1, 1].
+ * speed (float) - The current velocity in mph.
+
+* This time the [simulator](https://github.com/udacity/self-driving-car-sim/releases) will not provide
+ * The cross track error (CTE) like the Proportional-Integral-Derivative Controller (PID) controller, I will have to calculate that it in the project! 
+Additionally, there's a 100 millisecond latency between actuations commands on top of the connection latency.
+
+## The MPC Model
+Model predictive control uses an optimizer to find the control inputs and minimize the cost function.
+We actually only execute the very first set of control inputs.
+This brings the vehicle to a new state and then you repeat the process.
+* Here is the MPC algorithm:
+ First, we set up everything required for the model predictive control loop, this consists of defining the duration of the trajectory T, by choosing N and dt.
+ Next, we define the vehicle model and constraints such as actual limitations.
+ Finally, we define the cost function.
+![alt text][image2]
+
+With the setup complete, we begin to state feedback loop.
+First, we pass the current state to the model predictive controller.
+Next, the optimization solver is called.
+The solver uses the initial state, the model constraints and cost function to return a vector of control inputs that minimize the cost function.
+The solver we'll use is called IPOPT.
+We apply the first control input to the vehicle and repeat the loop.
+![alt text][image3]
+
+## Timestep Length and Elapsed Duration (N & dt)
+The MPC optimiser has two variables to represent the horizon into the future to predict actuator changes. They are determined by N (Number of timesteps) and dt (timestep duration) where T (time) = N * dt.
+The values selected for N and dt are 10 and 0.1, respectively. This means that the optimizer is considering a one second duration to determine a corrective trajectory. Adjusting T by small amounts often produced erratic behavior, and by large ammount is too far
+
+## Polynomial Fitting and MPC Preprocessing
+The waypoints are preprocessed by transforming them to the vehicle's perspective. This simplifies the process to fit a polynomial to the waypoints because the vehicle's x and y coordinates are now at the origin (0, 0) and the orientation angle is also zero.
+Then, using the polyfit() function and a third-degree polynomial line to fit the transformed waypoints, and drawing the path that vehicle should follow.
+
+## Model Predictive Control with Latency
+To handle actuator latency, the state values are calculated using the model and the delay interval. These values are used instead of the initial one.
 ---
 
 ## Dependencies

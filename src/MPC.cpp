@@ -67,8 +67,8 @@ class FG_eval
       fg[0] += 250000*CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += 5000*CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
-	// setup the model constrains
-	// initial constrains
+  	// setup the model constrains
+  	// initial constrains
     fg[1 + x_start] = vars[x_start];
     fg[1 + y_start] = vars[y_start];
     fg[1 + psi_start] = vars[psi_start];
@@ -77,39 +77,39 @@ class FG_eval
     fg[1 + epsi_start] = vars[epsi_start];
 	
 		// the rest of constrains
-	for (unsigned int n = 1; n < N; n++) 
-    {
-	  // The state for time t+1 .
-      AD<double> x1 = vars[x_start + n];
-      AD<double> y1 = vars[y_start + n];
-      AD<double> psi1 = vars[psi_start + n];
-      AD<double> v1 = vars[v_start + n];
-      AD<double> cte1 = vars[cte_start + n];
-      AD<double> epsi1 = vars[epsi_start + n];
-      // The state for time t.
-      AD<double> x0 = vars[x_start + n - 1];
-      AD<double> y0 = vars[y_start + n - 1];
-      AD<double> psi0 = vars[psi_start + n - 1];
-      AD<double> v0 = vars[v_start + n - 1];
-      AD<double> cte0 = vars[cte_start + n - 1];
-      AD<double> epsi0 = vars[epsi_start + n - 1];
-      AD<double> delta0 = vars[delta_start + n - 1];
-      AD<double> a0 = vars[a_start + n - 1];
+  	for (unsigned int n = 1; n < N; n++) 
+      {
+  	  // The state for time t+1 .
+        AD<double> x1 = vars[x_start + n];
+        AD<double> y1 = vars[y_start + n];
+        AD<double> psi1 = vars[psi_start + n];
+        AD<double> v1 = vars[v_start + n];
+        AD<double> cte1 = vars[cte_start + n];
+        AD<double> epsi1 = vars[epsi_start + n];
+        // The state for time t.
+        AD<double> x0 = vars[x_start + n - 1];
+        AD<double> y0 = vars[y_start + n - 1];
+        AD<double> psi0 = vars[psi_start + n - 1];
+        AD<double> v0 = vars[v_start + n - 1];
+        AD<double> cte0 = vars[cte_start + n - 1];
+        AD<double> epsi0 = vars[epsi_start + n - 1];
+        AD<double> delta0 = vars[delta_start + n - 1];
+        AD<double> a0 = vars[a_start + n - 1];
 
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
-      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
-      
-      // Here's `x` to get you started.
-      // The idea here is to constraint this value to be 0.
-	  
-	  // TODO: setup the rest of model constrains
-      fg[1 + x_start + n] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
-      fg[1 + y_start + n] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      fg[1 + psi_start + n] = psi1 - (psi0 - v0 / Lf * delta0 * dt);
-      fg[1 + v_start + n] = v1 - (v0 + a0 * dt);
-      fg[1 + cte_start + n] = cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
-      fg[1 + epsi_start + n] = epsi1 - ((psi0 - psides0) - v0 / Lf * delta0 * dt);
-	}
+        AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
+        AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
+        
+        // Here's `x` to get you started.
+        // The idea here is to constraint this value to be 0.
+  	  
+  	    // TODO: setup the rest of model constrains
+        fg[1 + x_start + n] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+        fg[1 + y_start + n] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+        fg[1 + psi_start + n] = psi1 - (psi0 - v0 / Lf * delta0 * dt);
+        fg[1 + v_start + n] = v1 - (v0 + a0 * dt);
+        fg[1 + cte_start + n] = cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
+        fg[1 + epsi_start + n] = epsi1 - ((psi0 - psides0) - v0 / Lf * delta0 * dt);
+  	}
   }
 };
 

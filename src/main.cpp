@@ -78,19 +78,21 @@ int main()
   // MPC is initialized here!
   MPC mpc;
 
-  h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
-                     uWS::OpCode opCode) {
+  h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) 
+  {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
     cout << sdata << endl;
-    if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
+    if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') 
+    {
       string s = hasData(sdata);
       if (s != "") {
         auto j = json::parse(s);
         string event = j[0].get<string>();
-        if (event == "telemetry") {
+        if (event == "telemetry") 
+        {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
@@ -100,31 +102,31 @@ int main()
           double v = j[1]["speed"];
           double delta= j[1]["steering_angle"];
           double a = j[1]["throttle"];
-		  double Lf = 2.67;
+		      double Lf = 2.67;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
-		  size_t n_waypoints = ptsx.size();
-		  for(unsigned int i = 0;i < n_waypoints;++i)
+    		  size_t n_waypoints = ptsx.size();
+    		  for(unsigned int i = 0;i < n_waypoints;++i)
           {
-			double shift_x = ptsx[i] - px;
-			double shift_y = ptsy[i] - py;
-			
-			ptsx[i] = (shift_x * cos(-psi) - shift_y * sin(-psi));
-			ptsy[i] = (shift_x * sin(-psi) + shift_y * cos(-psi));
-		  }
-		  double *ptrx = &ptsx[0];
-		  Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, n_waypoints);
+      			double shift_x = ptsx[i] - px;
+      			double shift_y = ptsy[i] - py;
+      			
+      			ptsx[i] = (shift_x * cos(-psi) - shift_y * sin(-psi));
+      			ptsy[i] = (shift_x * sin(-psi) + shift_y * cos(-psi));
+    		  }
+    		  double *ptrx = &ptsx[0];
+    		  Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, n_waypoints);
+    		  
+    		  double *ptry = &ptsy[0];
+    		  Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, n_waypoints);
+    		  
+    		  auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
 		  
-		  double *ptry = &ptsy[0];
-		  Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, n_waypoints);
-		  
-		  auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
-		  
-		// Actuator delay in milliseconds.
+		      // Actuator delay in milliseconds.
           const int actuator_delay =  100;
 
           // Actuator delay in seconds.
@@ -149,14 +151,12 @@ int main()
           Eigen::VectorXd state(6);
           state << x_delay, y_delay, psi_delay, v_delay, cte_delay, epsi_delay;
 		  
-		  auto vars = mpc.Solve(state, coeffs);
+		      auto vars = mpc.Solve(state, coeffs);
 		  
           //double steer_value = j[1]["steering_angle"];
           double steer_value = vars[0]/(deg2rad(25));
           //double throttle_value = j[1]["throttle"];
           double throttle_value = vars[1];
-
-		  
 		  
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -170,17 +170,17 @@ int main()
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-		  for(unsigned int i = 0;i < vars.size();++i)
+		      for(unsigned int i = 0;i < vars.size();++i)
           {
-			  if(i % 2 == 0)
-              {
-				  mpc_x_vals.push_back(vars[i]);
-			  }
-			  else
-              {
-				  mpc_y_vals.push_back(vars[i]);
-			  }
-		  }
+            if(i % 2 == 0)
+            {
+				        mpc_x_vals.push_back(vars[i]);
+			      }  
+			      else
+            {
+				      mpc_y_vals.push_back(vars[i]);
+			      }
+		      }
 		  
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
@@ -191,13 +191,13 @@ int main()
 		  
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
-		  double poly_inc  = 2.5;
-		  int num_points = 25;
-		  for(int i = 0;i < num_points;++i)
+    		  double poly_inc  = 2.5;
+    		  int num_points = 25;
+    		  for(int i = 0;i < num_points;++i)
           {
-			  next_x_vals.push_back(poly_inc * i);
-			  next_y_vals.push_back(polyeval(coeffs, poly_inc * i));
-		  }
+    			  next_x_vals.push_back(poly_inc * i);
+    			  next_y_vals.push_back(polyeval(coeffs, poly_inc * i));
+    		  }
 		  
 		  
           msgJson["next_x"] = next_x_vals;
@@ -218,7 +218,9 @@ int main()
           this_thread::sleep_for(chrono::milliseconds(actuator_delay));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
-      } else {
+      } 
+      else 
+      {
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -229,12 +231,15 @@ int main()
   // We don't need this since we're not using HTTP but if it's removed the
   // program
   // doesn't compile :-(
-  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
-                     size_t, size_t) {
+  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) 
+  {
     const std::string s = "<h1>Hello world!</h1>";
-    if (req.getUrl().valueLength == 1) {
+    if (req.getUrl().valueLength == 1) 
+    {
       res->end(s.data(), s.length());
-    } else {
+    } 
+    else 
+    {
       // i guess this should be done more gracefully?
       res->end(nullptr, 0);
     }
@@ -251,9 +256,12 @@ int main()
   });
 
   int port = 4567;
-  if (h.listen(port)) {
+  if (h.listen(port)) 
+  {
     std::cout << "Listening to port " << port << std::endl;
-  } else {
+  } 
+  else 
+  {
     std::cerr << "Failed to listen to port" << std::endl;
     return -1;
   }
