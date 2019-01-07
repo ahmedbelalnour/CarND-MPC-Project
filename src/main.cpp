@@ -100,6 +100,9 @@ int main()
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double delta= j[1]["steering_angle"];
+          double a = j[1]["throttle"];
+          
 		  double Lf = 2.67;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -123,16 +126,35 @@ int main()
           Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, n_waypoints);
 
           auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
-
-	      double cte = polyeval(coeffs, 0);
+		// considering actuator delay
+        // At current time t=0, your car's states are px=0, py=0, psi=0 right after converting to car coordinate. 
+          double px_0 = 0;
+          double py_0 = 0;
+          double psi_0 = 0;
+          //There you calcualte cte and epsi
+	      double cte_0 = polyeval(coeffs, 0);
           // the angle of tangent line of the polynomial
 		  // double epsi = psi - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] * pow(px, 2));
 		  // for psi is zero, then px is zero, the simplified form of equation is as the following:
-	      double epsi = -atan(coeffs[1]);
+	      double epsi_0 = -atan(coeffs[1]);
+
+          // state after delay
+          const int actuator_delay =  100;
+          // Actuator delay in seconds.
+          const double latency = actuator_delay / 1000.0;
+          //Now predict all the states for t=latency. 
+          // You can simplify them further knowing some of the variables are 0.   
+          delta*=-1; 	//  change of sign because turning left is negative sign in simulator but positive yaw for MPC
+          double px_latency = px_0 + v*cos(psi_0)*latency; 
+          double py_latency = py_0 + v*sin(psi_0)*latency;
+          double psi_latency = psi_0 + v*delta*latency/Lf;
+          double v_latency = v + a*latency;
+          double cte_latency = cte_0 + v*sin(epsi_0)*latency;
+          double epsi_latency = epsi_0 + v*delta*latency/Lf;
 
           // Define the state vector.
           Eigen::VectorXd state(n_waypoints);
-          state << 0, 0, 0, v, cte, epsi;
+          state << px_latency, py_latency, psi_latency, v_latency, cte_latency, epsi_latency;
 		  
 		  auto vars = mpc.Solve(state, coeffs);
 		  
@@ -200,7 +222,7 @@ int main()
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
           // Actuator delay in milliseconds.
-          const int actuator_delay =  100;
+
           this_thread::sleep_for(chrono::milliseconds(actuator_delay));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
