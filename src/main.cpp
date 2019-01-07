@@ -100,61 +100,45 @@ int main()
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
-          double delta= j[1]["steering_angle"];
-          double a = j[1]["throttle"];
-		      double Lf = 2.67;
+		  double Lf = 2.67;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
-    		  size_t n_waypoints = ptsx.size();
-    		  for(unsigned int i = 0;i < n_waypoints;++i)
+          size_t n_waypoints = ptsx.size();
+          for(unsigned int i = 0;i < n_waypoints;++i)
           {
-      			double shift_x = ptsx[i] - px;
-      			double shift_y = ptsy[i] - py;
-      			
-      			ptsx[i] = (shift_x * cos(-psi) - shift_y * sin(-psi));
-      			ptsy[i] = (shift_x * sin(-psi) + shift_y * cos(-psi));
-    		  }
-    		  double *ptrx = &ptsx[0];
-    		  Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, n_waypoints);
-    		  
-    		  double *ptry = &ptsy[0];
-    		  Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, n_waypoints);
-    		  
-    		  auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
-		  
-		      // Actuator delay in milliseconds.
-          const int actuator_delay =  100;
+            double shift_x = ptsx[i] - px;
+            double shift_y = ptsy[i] - py;
 
-          // Actuator delay in seconds.
-          const double delay = actuator_delay / 1000.0;
+            ptsx[i] = (shift_x * cos(-psi) - shift_y * sin(-psi));
+            ptsy[i] = (shift_x * sin(-psi) + shift_y * cos(-psi));
+          }
+          double *ptrx = &ptsx[0];
+          Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, n_waypoints);
 
-          // Initial state.
-          const double x_0 = 0;
-          const double y_0 = 0;
-          const double psi_0 = 0;
-          const double cte_0 = coeffs[0];
-          const double epsi_0 = -atan(coeffs[1]);
+          double *ptry = &ptsy[0];
+          Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, n_waypoints);
 
-          // State after delay.
-          double x_delay = x_0 + ( v * cos(psi_0) * delay );
-          double y_delay = y_0 + ( v * sin(psi_0) * delay );
-          double psi_delay = psi_0 - ( v * delta * delay / Lf );
-          double v_delay = v + a * delay;
-          double cte_delay = cte_0 + ( v * sin(epsi_0) * delay );
-          double epsi_delay = epsi_0 - ( v * atan(coeffs[1]) * delay / Lf );
+          auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
+
+	      double cte = polyeval(coeffs, 0);
+          // the angle of tangent line of the polynomial
+		  // double epsi = psi - atan(coeffs[1] + 2 * px * coeffs[2] + 3 * coeffs[3] * pow(px, 2));
+		  // for psi is zero, then px is zero, the simplified form of equation is as the following:
+	      double epsi = -atan(coeffs[1]);
 
           // Define the state vector.
-          Eigen::VectorXd state(6);
-          state << x_delay, y_delay, psi_delay, v_delay, cte_delay, epsi_delay;
+          Eigen::VectorXd state(n_waypoints);
+          state << 0, 0, 0, v, cte, epsi;
 		  
-		      auto vars = mpc.Solve(state, coeffs);
+		  auto vars = mpc.Solve(state, coeffs);
 		  
           //double steer_value = j[1]["steering_angle"];
-          double steer_value = vars[0]/(deg2rad(25));
+          
+          double steer_value = vars[0]/(deg2rad(25) * Lf);
           //double throttle_value = j[1]["throttle"];
           double throttle_value = vars[1];
 		  
@@ -215,6 +199,8 @@ int main()
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
+          // Actuator delay in milliseconds.
+          const int actuator_delay =  100;
           this_thread::sleep_for(chrono::milliseconds(actuator_delay));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
