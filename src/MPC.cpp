@@ -49,23 +49,26 @@ class FG_eval
     // the Solver function below.
     fg[0] = 0; // state cost
 
-    for(unsigned int i = 0; i < N; i++) 
+    // The part of the cost based on the reference state.
+    for (unsigned int n = 0; n < N; n++) 
     {
-      fg[0] += 1000*CppAD::pow(vars[cte_start + i] - ref_cte, 2);
-      fg[0] += 1000*CppAD::pow(vars[epsi_start + i] - ref_epsi, 2);
-      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
+      fg[0] += 2500 * CppAD::pow(vars[cte_start + n], 2);
+      fg[0] += 2500 * CppAD::pow(vars[epsi_start + n], 2);
+      fg[0] += 1 * CppAD::pow(vars[v_start + n] - ref_v, 2);
     }
 
-    for(unsigned int i = 0; i< N - 1; i++) 
+    // Minimize the use of actuators.
+    for (unsigned int n = 0; n < N - 1; n++) 
     {
-      fg[0] += 50*CppAD::pow(vars[delta_start + i], 2);
-      fg[0] += 50*CppAD::pow(vars[a_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[delta_start + n], 2);
+      fg[0] += 100 * CppAD::pow(vars[a_start + n], 2);
     }
 
-    for(unsigned int i = 0; i < N - 2; i++) 
+    // Minimize the value gap between sequential actuations.
+    for (unsigned int n = 0; n < N - 2; n++) 
     {
-      fg[0] += 250000*CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
-      fg[0] += 5000*CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
+      fg[0] += 90000 * CppAD::pow(vars[delta_start + n + 1] - vars[delta_start + n], 2);
+      fg[0] += 700 * CppAD::pow(vars[a_start + n + 1] - vars[a_start + n], 2);
     }
   	// setup the model constrains
   	// initial constrains
